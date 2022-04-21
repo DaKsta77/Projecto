@@ -11,6 +11,28 @@
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
+#include <unistd.h>
+
+/*Menu Help*/
+
+int DEFAULT_GAME=1;
+
+void help(char *programa)
+{
+    printf("Palavras Cruzadas.\n\n");
+    printf("Utilizaçao: %s [opçoes]\n", programa);
+    printf("Opçoes validas:\n");
+    printf("[-h]\t\t   ajuda para o utilizador\n");
+    printf("[-t [linha]x[coluna]]\t   define a dimensao do tabuleiro de jogo. O valor pre-definido vai é 9x9\n");
+    printf("[-d (FILENAME)]\t   define o ficheiro dicionario a usar\n");
+    printf("[-l (FILENAME)]\t   define o ficheiro com as letras restringidas, usadas no modo de jogo 3 e 4\n");
+    printf("[-m (5-20)]\t   define o numero maximo de letras que o jogador pode ter na mao, so aplicável nos modos de jogo 3 e 4\n");
+    printf("[-n (nn)]\t   define o numero maximo de jogadas, pre-definido valor 0\n");
+    printf("[-i (FILENAME)]\t   define o nome do ficheiro que contem o tabuleiro que o jogador quer utilizar para o jogo,a dimensao deste definida previamente em -t\n");
+    printf("[-j (0-4)]\t   define o modo de jogo (por omissao, o modo de jogo e %d)\n", DEFAULT_GAME);
+    printf("[-o (FILENAME)]\t   define o ficheiro para escrever e guardar o tabuleiro final\n");
+    printf("[-r (FILENAME)]\t   define o ficheiro para guardar o registo das jogadas possiveis, apenas para os modos de jogo 1 2 e 3. Por omissao, não ha registo\n");
+}
 
 // Pre-formatacao do tabuleiro
 void pre_formatacao(int colunas_total, int linhas_total, int tamanho_tabuleiro,
@@ -1560,39 +1582,69 @@ void analise_casas(char **casas_possiveis, int N_casas_total, int N_Colunas_DIC,
 (*Linha_jogada) = Linha_jogada_Max;
 memcpy(jogada_conteudo, jogada_conteudo_Max, strlen(jogada_conteudo_Max));
 }
-//  MAIN
 int main(int argc, char *argv[]) {
 
-  int tamanho_tabuleiro = 0, I = 0, colunas_total = 0, linhas_total = 0,
+      int tamanho_tabuleiro = 0, I = 0, colunas_total = 0, linhas_total = 0,
       linha_index_tabuleiro, coluna_index_tabuleiro, gameover = 0, N_jogada = 1;
-  int modo_de_jogo = 1;
+      int modo_de_jogo = 1;
+      char File_letras[]="letras.txt";
+      char File_dicionario[]="r /usr/share/dict/words";
+      int maximo_letras;
+      int maximo_jogadas;
+      char ficheiro_carregar_tabuleiro[]={0};
+      char ficheiro_guardar_tabuleiro[]={0};
+      char ficheiro_jogadas_possiveis[]={0};
 
- // variaveis relativas aos argumentos da linha de comando
-     int ajuda=0;
-     char ficheiro_dicionario[]={0};
-     char ficheiro_letras[]={0};
-     int maximo_letras;
-     int maximo_jogadas;
-     char ficheiro_carregar_tabuleiro[]={0};
-     char ficheiro_guardar_tabuleiro[]={0};
-     char ficheiro_jogadas_possiveis[]={0};
 
- // Procura de argumentos na linha de comandos
-             for(int i1=1;i1<=argc;i1+2){
-             if(argv[il]==-h){
-                ajuda=1;
-             }
-              if(argv[il]==-t){
-                tamanho_tabuleiro=argv[il+1][1];
-             }
-             if(argv[il]==-d){
-                strcpy(ficheiro_dicionario,argv[il+1]);
-             }
+    int opt= 'h';    /* opção para getopt() */
 
-             if(argv[il]==-j){
-                modo_de_jogo=argv[il+1];
-             }
-             }
+    /* processar as opções da linha de comando */
+
+    /*Print arguments*/
+    for( int i = 0; i < argc; ++i ) {
+        printf( "argv[ %d ] = %s\n", i, argv[ i ] );
+    }
+
+    /*debuggerprintf("dsds");*/
+    while ((opt= getopt(argc, argv, "h:t:d:l:m:n:i:j:o:r")) != -1) {
+        switch (opt) {
+            case 't':
+               /*validar*/ sscanf(optarg, "%dx%d", &linhas_total, &colunas_total); /* se houver erro, fica o valor por omissão */
+                break;
+            case 'd':
+                sscanf(optarg, "%s", &File_dicionario);
+                break;
+            case 'l':
+                sscanf(optarg, "%s", &File_letras);
+                break;
+            case 'm':
+                sscanf(optarg, "%d", &maximo_letras);
+                break;
+            case 'n':
+                sscanf(optarg, "%d", &maximo_jogadas);
+                break;
+            case 'i':
+                sscanf(optarg, "%s", &ficheiro_carregar_tabuleiro);
+                break;
+            case 'j':
+                sscanf(optarg, "%d", &modo_de_jogo);
+                break;
+            case 'o':
+                sscanf(optarg, "%s", &ficheiro_guardar_tabuleiro);
+                break;
+            case 'r':
+                sscanf(optarg, "%s", &ficheiro_jogadas_possiveis);
+                break;
+            case 'h': /* help */
+                help(argv[0]);
+                break;
+            default: /* '?' opções inválidas */
+                printf("Erro: opção '%c' desconhecida.\n\n", optopt);
+                help(argv[0]);
+                return EXIT_FAILURE;
+                break;
+        }
+    }
 /*
       -h
       -t lxc
